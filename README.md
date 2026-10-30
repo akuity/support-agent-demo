@@ -73,11 +73,11 @@ git push
 out of `agent/` afterwards: every commit there is another agent version.
 
 Then record the commits and the image digest in the platform repo's
-`setup/kargo/60_freight.yaml`, which defines one piece of Freight per version.
+`setup/kargo/freight/freight.yaml`, which defines one piece of Freight per version.
 From this repo, with the platform repo checked out next to it:
 
 ```sh
-f=../agent-delivery-demo/setup/kargo/60_freight.yaml
+f=../agent-delivery-demo/setup/kargo/freight/freight.yaml
 digest=$(docker buildx imagetools inspect ghcr.io/akuity/support-agent-demo:0.1.0 \
   --format '{{json .Manifest.Digest}}' | tr -d '"')
 sed -i '' "s/REPLACE_WITH_IMAGE_DIGEST/$digest/g" "$f"
