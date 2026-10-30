@@ -1,0 +1,66 @@
+# OpenShell sandbox policy for the support agent. Part of the agent bundle.
+#
+# OpenShell enforces it at runtime. During promotion, Kargo runs the OpenShell
+# policy prover on it and blocks the promotion if it grants more than the
+# target stage's boundary in boundaries/.
+#
+# Model access (api.anthropic.com) isn't listed here. It comes from the
+# anthropic-python provider attached to the sandbox, and only that provider
+# carries the API key.
+version: 1
+
+# Filesystem and process settings are fixed when the sandbox is created, so
+# changing them makes the promotion recreate the sandbox. Network rules
+# hot-reload in place.
+filesystem_policy:
+  # include_workdir stays false and /sandbox is listed explicitly, so the
+  # prover can compare paths exactly.
+  include_workdir: false
+  read_only:
+    - /usr
+    - /lib
+    - /lib64
+    - /etc
+    - /app
+    - /proc
+    - /dev/urandom
+  read_write:
+    - /sandbox
+    - /tmp
+    - /dev/null
+
+landlock:
+  compatibility: best_effort
+
+network_policies:
+  orders_api:
+    endpoints:
+      - host: orders-api.orders.svc.cluster.local
+        port: 80
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow:
+              method: GET
+              path: /customers/*/orders
+          - allow:
+              method: GET
+              path: /orders/*
+    binaries:
+      # The real path of the interpreter in the harness image (python:3.12-slim).
+      - path: /usr/local/bin/python3.12
+
+  # New in this version: lets the issue_refund tool create refunds. Kept as its
+  # own named rule so it shows up as one reviewable unit in policy diffs.
+  orders_api_refunds:
+    endpoints:
+      - host: orders-api.orders.svc.cluster.local
+        port: 80
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow:
+              method: POST
+              path: /orders/*/refunds
+    binaries:
+      - path: /usr/local/bin/python3.12

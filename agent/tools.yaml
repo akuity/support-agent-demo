@@ -1,0 +1,35 @@
+# Tools the support agent can call. Each tool maps to one Orders API request.
+# The harness exposes `name`, `description` and `input_schema` to the model. `http`
+# says how the harness executes the call: path placeholders are filled from the
+# tool input, and the remaining input fields form the JSON body for non-GET requests.
+#
+# Adding a tool here doesn't grant access to it. The OpenShell policy
+# (policy.yaml) still has to allow the request, and the stage's boundary has
+# to allow the policy.
+tools:
+  - name: get_customer_orders
+    description: List all orders for the signed-in customer, with status and items.
+    input_schema:
+      type: object
+      properties:
+        customer_id:
+          type: string
+          description: The signed-in customer's ID.
+      required: [customer_id]
+    http:
+      method: GET
+      path: /customers/{customer_id}/orders
+
+  - name: get_order
+    description: >-
+      Look up a single order by order ID (for example A-5001). Returns the order's
+      customer_id, which you must check against the signed-in customer.
+    input_schema:
+      type: object
+      properties:
+        order_id:
+          type: string
+      required: [order_id]
+    http:
+      method: GET
+      path: /orders/{order_id}
