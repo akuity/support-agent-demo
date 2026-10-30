@@ -49,3 +49,18 @@ network_policies:
     binaries:
       # The real path of the interpreter in the harness image (python:3.12-slim).
       - path: /usr/local/bin/python3.12
+
+  # New in this version: lets the issue_refund tool create refunds. Kept as its
+  # own named rule so it shows up as one reviewable unit in policy diffs.
+  orders_api_refunds:
+    endpoints:
+      - host: orders-api.orders.svc.cluster.local
+        port: 80
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow:
+              method: POST
+              path: /orders/*/refunds
+    binaries:
+      - path: /usr/local/bin/python3.12

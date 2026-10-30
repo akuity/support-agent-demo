@@ -33,3 +33,22 @@ tools:
     http:
       method: GET
       path: /orders/{order_id}
+
+  - name: issue_refund
+    description: >-
+      Refund a delivered order that arrived damaged or defective. The amount
+      must not exceed the order total.
+    input_schema:
+      type: object
+      properties:
+        order_id:
+          type: string
+        amount:
+          type: number
+          description: Refund amount in USD.
+        reason:
+          type: string
+      required: [order_id, amount, reason]
+    http:
+      method: POST
+      path: /orders/{order_id}/refunds
