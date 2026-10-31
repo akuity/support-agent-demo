@@ -14,7 +14,7 @@ each version of the agent through dev and two production stages with Kargo.
 |---|---|
 | `agent/` | **The agent bundle.** Everything that defines what the agent does: `agent.yaml` (model, effort, limits), `system-prompt.md`, `tools.yaml`, `policy.yaml` (the OpenShell sandbox policy), and `evals.yaml` |
 | `harness/` | The harness image: a generic Claude tool-use loop, configured entirely by the bundle |
-| `demo/` | For maintainers: the changes that make up the demo's commit history (`demo/apply.sh`) |
+| `demo/` | For maintainers: every agent version, and `demo/apply.sh`, which rebuilds the commit history from them |
 
 ## How a change ships
 
@@ -50,37 +50,43 @@ the platform repo promotes each one and explains what happens.
 ## For maintainers: recreating the demo history
 
 Readers pick versions from this repo's history, so it must contain exactly the
-commits above, in order. To recreate it in a fresh repo:
+commits above, in order. `demo/` holds every version, so the history can be
+rebuilt from the files alone: `demo/01-initial/` is the complete version 1, and
+each later scenario holds only the files that change. To recreate it in a
+fresh repo, from a copy of this one without its `.git` directory:
 
 ```sh
-# Version 1: the current agent/ as committed here, plus everything else
-git add -A && git commit -m "Initial support agent"
-git push -u origin main
+git init -b main
+# Version 1: the first commit holds the whole repo, with version 1 in agent/
+demo/apply.sh 01-initial
+git remote add origin <repo-url> && git push -u origin main
 gh release create v0.1.0 --title "v0.1.0" --notes "Initial harness"
 
-# Versions 2-4: each script run commits one change under agent/
+# Versions 2-4: each run commits one change under agent/
 demo/apply.sh 02-model-upgrade
 demo/apply.sh 03-prompt-regression
 demo/apply.sh 04-refunds
 git push
 ```
 
-`agent/` must hold version 1 when you make the first commit. Keep other changes
-out of `agent/` afterwards: every commit there is another agent version.
+Keep other changes out of `agent/` afterwards: every commit there is another
+agent version.
 
 Then record the commits and the image digest in the platform repo's
-`setup/kargo/freight/freight.yaml`, which defines one piece of Freight per version.
-From this repo, with the platform repo checked out next to it:
+`setup/kargo/freight/freight.yaml`, which defines one piece of Freight per
+version, in order. From this repo, with the platform repo checked out next to
+it (needs `yq` v4):
 
 ```sh
 f=../agent-delivery-demo/setup/kargo/freight/freight.yaml
 digest=$(docker buildx imagetools inspect ghcr.io/akuity/support-agent-demo:0.1.0 \
   --format '{{json .Manifest.Digest}}' | tr -d '"')
-sed -i '' "s/REPLACE_WITH_IMAGE_DIGEST/$digest/g" "$f"
-n=1
-git log --reverse --format=%H -- agent/ | while read -r sha; do
-  sed -i '' "s/REPLACE_WITH_V${n}_COMMIT/$sha/" "$f"
-  n=$((n + 1))
+i=0
+for sha in $(git log --reverse --format=%H -- agent/); do
+  I=$i SHA=$sha DIGEST=$digest yq -i '
+    (select(document_index == env(I)) | .commits[0].id) = strenv(SHA) |
+    (select(document_index == env(I)) | .images[0].digest) = strenv(DIGEST)' "$f"
+  i=$((i + 1))
 done
 ```
 

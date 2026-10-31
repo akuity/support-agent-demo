@@ -1,0 +1,14 @@
+# Support agent runtime configuration, read by the harness. Part of the agent
+# bundle: everything in agent/ moves through the stages as one unit of Freight,
+# together with the harness image.
+
+model:
+  id: claude-opus-5
+  max_tokens: 16000
+  # How much the model thinks before answering: low | medium | high | xhigh | max.
+  # Support chat doesn't need deep reasoning, so this stays low to keep latency
+  # and cost down.
+  effort: low
+
+# The most model round-trips per customer message. Guards against runaway tool loops.
+max_turns: 6
