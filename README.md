@@ -6,7 +6,7 @@ orders through the store's Orders API and runs in an
 
 This is the agent team's repo. It's delivered by the pipeline in
 [`agent-delivery-demo`](https://github.com/akuity/agent-delivery-demo), which promotes
-each version of the agent through dev, staging and prod with Kargo.
+each version of the agent through dev and two production stages with Kargo.
 
 ## What's here
 
