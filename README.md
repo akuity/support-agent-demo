@@ -24,10 +24,6 @@ each version of the agent through dev, staging and prod with Kargo.
 - **A change to the harness code**: publish a GitHub release. The release
   workflow builds `ghcr.io/<owner>/support-agent-demo:<version>`, and the
   Warehouse discovers the new image.
-
-In this demo, Freight is created explicitly rather than automatically, so the
-walkthrough can step through the versions in order: the platform repo defines
-one piece of Freight per version, and you can assemble more in the Kargo UI.
   ```sh
   gh release create v0.2.0 --title "v0.2.0" --notes "..."
   ```
